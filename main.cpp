@@ -1,9 +1,9 @@
 
 //Using SDL and standard IO
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <stdio.h>
 #include <cstring>
-#include <bits/atomic_base.h>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -18,7 +18,32 @@ SDL_Surface* screenSurface = NULL;
 //The surface of the loaded media
 SDL_Surface* optimizedSurface = NULL;
 
-bool loadMedia() {
+bool loadMediaPNG() {
+	bool success = true;
+
+	char path[] = "/home/gras/CLionProjects/SDLBonanza/resources/cock.png";
+
+
+	SDL_Surface* loadSurface = IMG_Load(path);
+
+	if(loadSurface == NULL) {
+		printf("Unable to load image: %s with error msg: %s", path, IMG_GetError());
+		success = false;
+	}
+	//optimize image on load to remove conversion when blitting
+	optimizedSurface = SDL_ConvertSurface(loadSurface, screenSurface->format, NULL);
+
+	if(optimizedSurface == NULL) {
+		printf("The optimised image could not be computed with error: %s", SDL_GetError());
+		success = false;
+	}
+	SDL_FreeSurface(loadSurface);
+
+	return success;
+}
+
+
+bool loadMediaBMP() {
 	bool success = true;
 
 	char path[] = "/home/gras/CLionProjects/SDLBonanza/resources/cock.bmp";
@@ -51,19 +76,27 @@ bool init() {
 		success = false;
 	}
 	else {
-		window = SDL_CreateWindow("Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-
-		if(window == NULL) {
-			printf("The window could not be created with error: %s", SDL_GetError());
+		int pngFlag = IMG_INIT_PNG;
+		if(! (IMG_Init(pngFlag) & pngFlag)) {
+			printf("The img init flag from SDL2_IMAGE could not be initialised with error: %s", IMG_GetError());
 			success = false;
 		}
-		else {
-			screenSurface = SDL_GetWindowSurface(window);
-			if(screenSurface == NULL) {
-				printf("The screen surface could not be created with error: %s", SDL_GetError());
-				success = false;
+			else {
+				window = SDL_CreateWindow("Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+
+				if(window == NULL) {
+					printf("The window could not be created with error: %s", SDL_GetError());
+					success = false;
+				}
+				else {
+					screenSurface = SDL_GetWindowSurface(window);
+					if(screenSurface == NULL) {
+						printf("The screen surface could not be created with error: %s", SDL_GetError());
+						success = false;
+				}
 			}
 		}
+
 	}
 	return success;
 }
@@ -98,13 +131,11 @@ int main( int argc, char* args[] )
 		printf("The initialization failed!");
 	}
 	else
-		if(!loadMedia()) {
+		if(!loadMediaPNG()) {
 			printf("The media could not be loaded!");
 		}
 		else
 		{
-			SDL_BlitSurface(optimizedSurface, NULL, screenSurface, NULL);
-
 			//Update the surface
 			SDL_UpdateWindowSurface( window );
 
@@ -119,7 +150,14 @@ int main( int argc, char* args[] )
 						switch(e.key.keysym.sym) {
 							case(SDLK_UP):
 								negative();
-								SDL_BlitSurface(optimizedSurface, NULL, screenSurface, NULL);
+
+								SDL_Rect rect;
+								rect.x = 0;
+								rect.y = 0;
+								rect.w = SCREEN_WIDTH;
+								rect.h = SCREEN_HEIGHT;
+								//the dstrect does not take into account the width and height, only postition, RTFM
+								SDL_BlitSurface(optimizedSurface, NULL, screenSurface, &rect);
 
 								//Update the surface
 								SDL_UpdateWindowSurface( window );
