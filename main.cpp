@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <cstring>
+#include <bits/atomic_base.h>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -70,6 +71,16 @@ void close() {
 	SDL_Quit();
 }
 
+void negative() {
+	for(int i=0; i<loadSurface->h; i++) {
+		for(int j=0; j<loadSurface->w; j++) {
+			Uint8* pixel = ((Uint8*)loadSurface->pixels + i * loadSurface->pitch + j * loadSurface->format->BytesPerPixel);
+			for(int k=0; k< loadSurface->format->BytesPerPixel; k++) {
+				*(pixel+k) = 0xFF - *(pixel+k);
+			}
+		}
+	}
+}
 
 int main( int argc, char* args[] )
 {
@@ -88,7 +99,29 @@ int main( int argc, char* args[] )
 			SDL_UpdateWindowSurface( window );
 
 			//Hack to get window to stay up
-			SDL_Event e; bool quit = false; while( quit == false ){ while( SDL_PollEvent( &e ) ){ if( e.type == SDL_QUIT ) quit = true; } }
+			SDL_Event e;
+			bool quit = false;
+			while( quit == false ) {
+				while( SDL_PollEvent( &e ) ) {
+					if( e.type == SDL_QUIT )
+						quit = true;
+					if( e.type == SDL_KEYDOWN) {
+						switch(e.key.keysym.sym) {
+							case(SDLK_UP):
+								negative();
+								SDL_BlitSurface(loadSurface, NULL, screenSurface, NULL);
+
+								//Update the surface
+								SDL_UpdateWindowSurface( window );
+
+								break;
+							default:
+								break;
+						}
+					}
+
+				}
+			}
 		}
 
 	//free and destroy window
