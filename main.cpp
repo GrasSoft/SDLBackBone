@@ -16,19 +16,29 @@ SDL_Window* window = NULL;
 SDL_Surface* screenSurface = NULL;
 
 //The surface of the loaded media
-SDL_Surface* loadSurface = NULL;
+SDL_Surface* optimizedSurface = NULL;
 
 bool loadMedia() {
 	bool success = true;
 
 	char path[] = "/home/gras/CLionProjects/SDLBonanza/resources/cock.bmp";
 
-	loadSurface = SDL_LoadBMP(path);
+
+	SDL_Surface* loadSurface = SDL_LoadBMP(path);
 
 	if(loadSurface == NULL) {
 		printf("Unable to load image: %s with error msg: %s", path, SDL_GetError());
 		success = false;
 	}
+	//optimize image on load to remove conversion when blitting
+	optimizedSurface = SDL_ConvertSurface(loadSurface, screenSurface->format, NULL);
+
+	if(optimizedSurface == NULL) {
+		printf("The optimised image could not be computed with error: %s", SDL_GetError());
+		success = false;
+	}
+	SDL_FreeSurface(loadSurface);
+
 	return success;
 }
 
@@ -72,10 +82,10 @@ void close() {
 }
 
 void negative() {
-	for(int i=0; i<loadSurface->h; i++) {
-		for(int j=0; j<loadSurface->w; j++) {
-			Uint8* pixel = ((Uint8*)loadSurface->pixels + i * loadSurface->pitch + j * loadSurface->format->BytesPerPixel);
-			for(int k=0; k< loadSurface->format->BytesPerPixel; k++) {
+	for(int i=0; i<optimizedSurface->h; i++) {
+		for(int j=0; j<optimizedSurface->w; j++) {
+			Uint8* pixel = ((Uint8*)optimizedSurface->pixels + i * optimizedSurface->pitch + j * optimizedSurface->format->BytesPerPixel);
+			for(int k=0; k< optimizedSurface->format->BytesPerPixel; k++) {
 				*(pixel+k) = 0xFF - *(pixel+k);
 			}
 		}
@@ -93,7 +103,7 @@ int main( int argc, char* args[] )
 		}
 		else
 		{
-			SDL_BlitSurface(loadSurface, NULL, screenSurface, NULL);
+			SDL_BlitSurface(optimizedSurface, NULL, screenSurface, NULL);
 
 			//Update the surface
 			SDL_UpdateWindowSurface( window );
@@ -109,7 +119,7 @@ int main( int argc, char* args[] )
 						switch(e.key.keysym.sym) {
 							case(SDLK_UP):
 								negative();
-								SDL_BlitSurface(loadSurface, NULL, screenSurface, NULL);
+								SDL_BlitSurface(optimizedSurface, NULL, screenSurface, NULL);
 
 								//Update the surface
 								SDL_UpdateWindowSurface( window );
