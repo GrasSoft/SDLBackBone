@@ -95,7 +95,6 @@ bool init() {
 				success = false;
 			}
 			else {
-					SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 
 					int pngFlag = IMG_INIT_PNG;
 					if(! (IMG_Init(pngFlag) & pngFlag)) {
@@ -164,8 +163,22 @@ void software_render() {
 
 //this method uses hardware to render images to the window
 void hardware_render() {
-	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
+	SDL_RenderPresent(renderer);
+}
+
+//this method uses hardware to render shapes
+void hardware_draw_shapes() {
+	SDL_Rect rect = {SCREEN_WIDTH/4, SCREEN_HEIGHT/4, SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
+	SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
+	SDL_RenderFillRect(renderer, &rect);
+	SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0xFF, 0xFF);
+	SDL_RenderDrawRect(renderer, &rect);
+	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xFF, 0xFF);
+	for(int i=SCREEN_HEIGHT/4; i<SCREEN_HEIGHT*3/4; i+=4) {
+		SDL_RenderDrawPoint(renderer,SCREEN_WIDTH/2, i);
+	}
+
 	SDL_RenderPresent(renderer);
 }
 
@@ -191,14 +204,18 @@ int main( int argc, char* args[] )
 				SDL_Event e;
 				bool quit = false;
 				while( quit == false ) {
+					SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+					SDL_RenderClear(renderer);
+					//this draws images using the hardware renderer
+					//hardware_render();
+					//this draws shapes like dots, lines and rectangles
+					hardware_draw_shapes();
 					while( SDL_PollEvent( &e ) ) {
 						if( e.type == SDL_QUIT )
 							quit = true;
-						hardware_render();
 						if( e.type == SDL_KEYDOWN) {
 							switch(e.key.keysym.sym) {
 								case(SDLK_UP):
-									hardware_render();
 									break;
 								default:
 									break;
