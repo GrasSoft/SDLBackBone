@@ -11,6 +11,8 @@ include_directories(${SDL2_INCLUDE_DIRS})
 find_package(SDL2_image REQUIRED)
 include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 
-add_executable(SDLBonanza main.cpp)
+add_executable(SDLBonanza main.cpp
+        Texture.cpp
+        Texture.h)
 
 target_link_libraries(SDLBonanza ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})

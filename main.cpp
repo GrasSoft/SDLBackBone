@@ -6,6 +6,8 @@
 #include <cstring>
 #include <filesystem>
 
+#include "Texture.h"
+
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
@@ -22,21 +24,7 @@ SDL_Surface* optimized_surface = NULL;
 //The renderer of the screen
 SDL_Renderer* renderer = NULL;
 
-//The texture to be rendered
-SDL_Texture* texture = NULL;
-
-SDL_Texture* load_texture() {
-	char path[] = "/home/gras/CLionProjects/SDLBonanza/resources/cock.png";
-
-	SDL_Texture* t = IMG_LoadTexture(renderer, path);
-
-	SDL_QueryTexture(t, NULL, NULL, NULL, NULL);
-	if(t == NULL) {
-		printf("Unable to load image: %s with error msg: %s", path, IMG_GetError());
-	}
-
-	return t;
-}
+Texture texture_obj;
 
 SDL_Surface* load_media() {
 	bool success = true;
@@ -134,21 +122,8 @@ void close() {
 	SDL_Quit();
 }
 
-void negative() {
-	for(int i=0; i<optimized_surface->h; i++) {
-		for(int j=0; j<optimized_surface->w; j++) {
-			Uint8* pixel = ((Uint8*)optimized_surface->pixels + i * optimized_surface->pitch + j * optimized_surface->format->BytesPerPixel);
-			for(int k=0; k< optimized_surface->format->BytesPerPixel; k++) {
-				*(pixel+k) = 0xFF - *(pixel+k);
-			}
-		}
-	}
-}
-
 //this method uses the CPU to render images to the window
 void software_render() {
-	negative();
-
 	SDL_Rect rect;
 	rect.x = 0;
 	rect.y = 0;
@@ -163,7 +138,7 @@ void software_render() {
 
 //this method uses hardware to render images to the window
 void hardware_render() {
-	SDL_RenderCopy(renderer, texture, NULL, NULL);
+	texture_obj.render(renderer, 0, 0);
 	SDL_RenderPresent(renderer);
 }
 
@@ -171,7 +146,7 @@ void hardware_render() {
 void viewport_rendering() {
 	SDL_Rect topright_viewport = {0,0,SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
 	SDL_RenderSetViewport(renderer, &topright_viewport);
-	SDL_RenderCopy(renderer, texture, NULL, NULL);
+	texture_obj.render(renderer, 0, 0);
 }
 
 //this method uses hardware to render shapes
@@ -186,7 +161,6 @@ void hardware_draw_shapes() {
 		SDL_RenderDrawPoint(renderer,SCREEN_WIDTH/2, i);
 	}
 	viewport_rendering();
-	SDL_RenderPresent(renderer);
 }
 
 int main( int argc, char* args[] )
@@ -202,11 +176,10 @@ int main( int argc, char* args[] )
 		//}
 		//else
 		{
-			texture = load_texture();
-			if(texture == NULL) {
-				printf("The texture could not be loaded!");
-			}
-			else {
+			std::string path = "/home/gras/CLionProjects/SDLBonanza/resources/cock.png";
+			texture_obj.loadFromFile(renderer, path);
+
+			{
 				//event handlers
 				SDL_Event e;
 				bool quit = false;
@@ -222,6 +195,8 @@ int main( int argc, char* args[] )
 					//hardware_render();
 					//this draws shapes like dots, lines and rectangles
 					hardware_draw_shapes();
+					SDL_RenderPresent(renderer);
+
 					while( SDL_PollEvent( &e ) ) {
 						if( e.type == SDL_QUIT )
 							quit = true;
