@@ -167,6 +167,13 @@ void hardware_render() {
 	SDL_RenderPresent(renderer);
 }
 
+//this function creates a second viewport to render to
+void viewport_rendering() {
+	SDL_Rect topright_viewport = {0,0,SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
+	SDL_RenderSetViewport(renderer, &topright_viewport);
+	SDL_RenderCopy(renderer, texture, NULL, NULL);
+}
+
 //this method uses hardware to render shapes
 void hardware_draw_shapes() {
 	SDL_Rect rect = {SCREEN_WIDTH/4, SCREEN_HEIGHT/4, SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
@@ -178,7 +185,7 @@ void hardware_draw_shapes() {
 	for(int i=SCREEN_HEIGHT/4; i<SCREEN_HEIGHT*3/4; i+=4) {
 		SDL_RenderDrawPoint(renderer,SCREEN_WIDTH/2, i);
 	}
-
+	viewport_rendering();
 	SDL_RenderPresent(renderer);
 }
 
@@ -204,7 +211,12 @@ int main( int argc, char* args[] )
 				SDL_Event e;
 				bool quit = false;
 				while( quit == false ) {
+					//set the viewport to the whole screen
+					SDL_Rect wholescreen_viewport = {0,0,SCREEN_WIDTH, SCREEN_HEIGHT};
+					SDL_RenderSetViewport(renderer, &wholescreen_viewport);
+					//set default render colour to while
 					SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+					//clear the screen so we can draw another frame
 					SDL_RenderClear(renderer);
 					//this draws images using the hardware renderer
 					//hardware_render();
