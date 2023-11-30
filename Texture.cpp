@@ -22,7 +22,7 @@ bool Texture::loadFromFile(SDL_Renderer* renderer, std::string& path) {
 	int h = 0;
 	SDL_QueryTexture(t, NULL, NULL, &w, &h);
 	if(t == NULL) {
-		printf("Unable to load image: %s with error msg: %s", path, IMG_GetError());
+		printf("Unable to load image: %s with error msg: %s\n", path.c_str(), IMG_GetError());
 		return false;
 	}
 	width = w;
@@ -40,9 +40,25 @@ void Texture::free() {
 	}
 }
 
-void Texture::render(SDL_Renderer* renderer, int x, int y) {
+void Texture::set_color(Uint8 red, Uint8 green, Uint8 blue) {
+	SDL_SetTextureColorMod(texture, red, green, blue);
+}
+
+void Texture::set_blend_mode(SDL_BlendMode blending) {
+	SDL_SetTextureBlendMode(texture, blending);
+}
+
+void Texture::set_alpha( Uint8 alpha ) {
+	SDL_SetTextureAlphaMod( texture, alpha );
+}
+
+void Texture::render(SDL_Renderer* renderer, int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip) {
 	SDL_Rect render_quad = { x, y, width, height};
-	SDL_RenderCopy(renderer,texture, NULL, &render_quad);
+	if(clip != NULL) {
+		render_quad.w = clip->w;
+		render_quad.h = clip->h;
+	}
+	SDL_RenderCopyEx(renderer, texture, clip, &render_quad, angle, center, flip);
 }
 
 int Texture::get_height() {

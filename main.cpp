@@ -2,15 +2,28 @@
 //Using SDL and standard IO
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdio.h>
 #include <cstring>
 #include <filesystem>
 
+#include "Button.h"
 #include "Texture.h"
+#include "Timer.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+
+
+//time between fps in ms, roughly 60 fps
+const int TIME_BETWEEN_FRAMES = 16;
+
+//The angle to which to render the image
+double degrees = 0.0;
+
+//Music from SDL_mixer
+Mix_Music* music = NULL;
 
 //The window we'll be rendering to
 SDL_Window* window = NULL;
@@ -26,41 +39,14 @@ SDL_Renderer* renderer = NULL;
 
 Texture texture_obj;
 
-SDL_Surface* load_media() {
-	bool success = true;
-
-	char path[] = "/home/gras/CLionProjects/SDLBonanza/resources/cock.png";
-	SDL_Surface* load_surface = NULL;
-	const char* extention = std::filesystem::path(path).extension().c_str();
-	if(!strcmp(extention, ".png"))
-		load_surface = IMG_Load(path);
-	else if(!strcmp(extention, ".bmp"))
-			load_surface = SDL_LoadBMP(path);
-
-	if(load_surface == NULL) {
-		printf("Unable to load image: %s with error msg: %s", path, IMG_GetError());
-		success = false;
-	}
-	//optimize image on load to remove conversion when blitting
-	SDL_Surface* optimized = SDL_ConvertSurface(load_surface, screen_surface->format, 0);
-
-	if(optimized == NULL) {
-		printf("The optimised image could not be computed with error: %s", SDL_GetError());
-		success = false;
-	}
-	SDL_FreeSurface(load_surface);
-
-	return optimized;
-
-}
-
+Button button;
 
 bool init() {
 	bool success = true;
 
 	//initialize sdl
-	if( SDL_Init(SDL_INIT_VIDEO) < 0) {
-		printf("SDL could not initialize with error code: %s", SDL_GetError());
+	if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize with error code: %s\n", SDL_GetError());
 		success = false;
 	}
 	else {
@@ -77,7 +63,7 @@ bool init() {
 			success = false;
 		}
 		else {
-			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED );
 			if(renderer == NULL) {
 				printf("The renderer could not be created with error: %s\n", SDL_GetError());
 				success = false;
@@ -89,13 +75,11 @@ bool init() {
 						printf("The img init flag from SDL2_IMAGE could not be initialised with error: %s", IMG_GetError());
 						success = false;
 					}
-					else {
-							//This section can not be used in combination with the hardware renderer
-							//screen_surface = SDL_GetWindowSurface(window);
-							//if(screen_surface == NULL) {
-							//	printf("The screen surface could not be created with error: %s", SDL_GetError());
-							//	success = false;
-							//}
+					//Initialize SDL_mixer
+					if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
+					{
+						printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+						success = false;
 					}
 			}
 		}
@@ -122,31 +106,12 @@ void close() {
 	SDL_Quit();
 }
 
-//this method uses the CPU to render images to the window
-void software_render() {
-	SDL_Rect rect;
-	rect.x = 0;
-	rect.y = 0;
-	rect.w = SCREEN_WIDTH;
-	rect.h = SCREEN_HEIGHT;
-	//the dstrect does not take into account the width and height, only postition, RTFM
-	SDL_BlitSurface(optimized_surface, NULL, screen_surface, &rect);
-
-	//Update the surface
-	SDL_UpdateWindowSurface( window );
-}
-
-//this method uses hardware to render images to the window
-void hardware_render() {
-	texture_obj.render(renderer, 0, 0);
-	SDL_RenderPresent(renderer);
-}
-
 //this function creates a second viewport to render to
 void viewport_rendering() {
 	SDL_Rect topright_viewport = {0,0,SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
 	SDL_RenderSetViewport(renderer, &topright_viewport);
-	texture_obj.render(renderer, 0, 0);
+	//texture_obj.render(renderer, 0, 0, NULL, degrees);
+	button.render(renderer);
 }
 
 //this method uses hardware to render shapes
@@ -163,27 +128,67 @@ void hardware_draw_shapes() {
 	viewport_rendering();
 }
 
+void play_music() {
+	music = Mix_LoadMUS( "/home/gras/CLionProjects/SDLBonanza/resources/medium.wav" );
+	if( music == NULL )
+	{
+		printf( "Failed to load medium sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+	}
+	else {
+		//If there is no music playing
+		if( Mix_PlayingMusic() == 0 )
+		{
+			//Play the music
+			Mix_PlayMusic( music, -1 );
+		}
+		//If music is being played
+		else
+		{
+			//If the music is paused
+			if( Mix_PausedMusic() == 1 )
+			{
+				//Resume the music
+				Mix_ResumeMusic();
+			}
+			//If the music is playing
+			else
+			{
+				//Pause the music
+				Mix_PauseMusic();
+			}
+		}
+	}
+}
+
 int main( int argc, char* args[] )
 {
 	if(!init()) {
 		printf("The initialization failed!");
 	}
 	else {
-		//This section can not be used in combination with the hardware renderer
-		//optimized_surface = load_media();
-		//if(optimized_surface == NULL) {
-		//	printf("The media could not be loaded!");
-		//}
-		//else
 		{
-			std::string path = "/home/gras/CLionProjects/SDLBonanza/resources/cock.png";
-			texture_obj.loadFromFile(renderer, path);
+			std::string path = "/home/gras/CLionProjects/SDLBonanza/resources/pulapizda.png";
+			if(!texture_obj.loadFromFile(renderer, path)) {
+				close();
+				return 0;
+			}
+			texture_obj.set_blend_mode(SDL_BLENDMODE_BLEND);
 
+			SDL_Rect clips[] = {{0,0,64,64}, {64,0, 64, 64}, {128, 0,64,64} };
+			button.set_texture(&texture_obj);
+			button.set_clips(3, clips);
+			button.set_function_pointer(&play_music);
 			{
 				//event handlers
 				SDL_Event e;
+
+				//timer to cap the fps of the application
+				Timer fps_timer;
+
 				bool quit = false;
 				while( quit == false ) {
+					fps_timer.start();
+
 					//set the viewport to the whole screen
 					SDL_Rect wholescreen_viewport = {0,0,SCREEN_WIDTH, SCREEN_HEIGHT};
 					SDL_RenderSetViewport(renderer, &wholescreen_viewport);
@@ -191,24 +196,39 @@ int main( int argc, char* args[] )
 					SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 					//clear the screen so we can draw another frame
 					SDL_RenderClear(renderer);
-					//this draws images using the hardware renderer
-					//hardware_render();
 					//this draws shapes like dots, lines and rectangles
 					hardware_draw_shapes();
 					SDL_RenderPresent(renderer);
 
+
 					while( SDL_PollEvent( &e ) ) {
 						if( e.type == SDL_QUIT )
 							quit = true;
+
+						button.handle_event(&e);
+
 						if( e.type == SDL_KEYDOWN) {
 							switch(e.key.keysym.sym) {
 								case(SDLK_UP):
+									texture_obj.set_color(0, 128, 0);
+									texture_obj.set_alpha(128);
+									break;
+								case(SDLK_LEFT):
+									degrees += 10;
+									break;
+								case (SDLK_RIGHT):
+									degrees -= 10;
 									break;
 								default:
 									break;
 							}
 						}
 
+					}
+
+					if(fps_timer.get_ticks() < TIME_BETWEEN_FRAMES ) {
+						//time to wait between frames
+						SDL_Delay(TIME_BETWEEN_FRAMES - fps_timer.get_ticks());
 					}
 				}
 			}
