@@ -8,7 +8,7 @@ Button::Button() {
     position.x = 0;
     position.y = 0;
 
-    sprite = NULL;
+    texture = NULL;
 
     fun_ptr = NULL;
 
@@ -17,7 +17,7 @@ Button::Button() {
         clips[i]= {0,0,0,0 };
     }
 
-    current_sprite = BUTTON_SPRITE_MOUSE_OUT;
+    current_texture = BUTTON_SPRITE_MOUSE_OUT;
 }
 
 void Button::set_position(int x, int y) {
@@ -34,11 +34,11 @@ void Button::set_clips(uint size, SDL_Rect* clips) {
 }
 
 void Button::render(SDL_Renderer* renderer) {
-    sprite->render(renderer, position.x, position.y, &clips[current_sprite]);
+    texture->render(renderer, position.x, position.y, &clips[current_texture]);
 }
 
 void Button::set_texture(Texture* t) {
-    sprite = t;
+    texture = t;
 }
 
 void Button::set_function_pointer(void (*ptr)()) {
@@ -52,23 +52,23 @@ void Button::handle_event(SDL_Event* e) {
     bool inside = true;
     SDL_GetMouseState( &x, &y );
 
-    if( x < position.x || x > clips[current_sprite].w + position.x)
+    if( x < position.x || x > clips[current_texture].w + position.x)
         inside = false;
-    if( y < position.y || y > clips[current_sprite].h + position.y)
+    if( y < position.y || y > clips[current_texture].h + position.y)
         inside = false;
 
     if(!inside)
-        current_sprite = BUTTON_SPRITE_MOUSE_OUT;
+        current_texture = BUTTON_SPRITE_MOUSE_OUT;
     else
         switch(e->type) {
             case(SDL_MOUSEMOTION):
                 if(size_clips > 1)
-                    current_sprite = BUTTON_SPRITE_MOUSE_OVER_MOTION;
+                    current_texture = BUTTON_SPRITE_MOUSE_OVER_MOTION;
                 break;
 
             case(SDL_MOUSEBUTTONDOWN):
                 if(size_clips > 2 ) {
-                    current_sprite = BUTTON_SPRITE_MOUSE_DOWN;
+                    current_texture = BUTTON_SPRITE_MOUSE_DOWN;
                     if(fun_ptr != NULL) {
                         (*fun_ptr)();
                     }
@@ -77,10 +77,10 @@ void Button::handle_event(SDL_Event* e) {
             //no break because if this step does not exist at least it returns to mouse over
             case(SDL_MOUSEBUTTONUP):
                 if(size_clips > 3)
-                    current_sprite = BUTTON_SPRITE_MOUSE_UP;
+                    current_texture = BUTTON_SPRITE_MOUSE_UP;
             default:
                 if(size_clips > 1)
-                    current_sprite = BUTTON_SPRITE_MOUSE_OVER_MOTION;
+                    current_texture = BUTTON_SPRITE_MOUSE_OVER_MOTION;
                 break;
         }
 }

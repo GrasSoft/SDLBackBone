@@ -20,6 +20,9 @@ add_executable(SDLBonanza main.cpp
         Button.cpp
         Button.h
         Timer.cpp
-        Timer.h)
+        Timer.h
+        Sprite.cpp
+        Sprite.h
+        definitions.h)
 
 target_link_libraries(SDLBonanza ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES} ${SDL2_MIXER_LIBRARIES})

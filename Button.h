@@ -55,10 +55,10 @@ private:
     //array of clips from the texture
     SDL_Rect clips[BUTTON_SPRITE_TOTAL];
 
-    Texture* sprite;
+    Texture* texture;
 
     //Currently used global sprite
-    ButtonSprite current_sprite;
+    ButtonSprite current_texture;
 
     //the interupt function pointer
     void (*fun_ptr)();
