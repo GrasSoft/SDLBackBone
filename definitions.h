@@ -2,6 +2,7 @@
 // Created by gras on 12/1/23.
 //
 // This file sets the deflaut global values that are needed
+#pragma once
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 

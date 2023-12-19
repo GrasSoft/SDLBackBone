@@ -1,7 +1,7 @@
 //
 // Created by gras on 11/30/23.
 //
-
+#pragma once
 #ifndef TIMER_H
 #define TIMER_H
 #include <SDL_stdinc.h>

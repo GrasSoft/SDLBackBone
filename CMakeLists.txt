@@ -23,6 +23,8 @@ add_executable(SDLBonanza main.cpp
         Timer.h
         Sprite.cpp
         Sprite.h
-        definitions.h)
+        definitions.h
+        Scene.cpp
+        Scene.h)
 
 target_link_libraries(SDLBonanza ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES} ${SDL2_MIXER_LIBRARIES})

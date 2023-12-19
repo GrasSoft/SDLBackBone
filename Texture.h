@@ -2,6 +2,7 @@
 // Created by gras on 11/25/23.
 //
 
+#pragma once
 #ifndef TEXTURE_H
 #define TEXTURE_H
 #include <SDL_render.h>

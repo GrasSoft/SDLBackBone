@@ -11,22 +11,14 @@
 #include "Texture.h"
 #include "Timer.h"
 #include "definitions.h"
-
-
-//The angle to which to render the image
-double degrees = 0.0;
+#include "Sprite.h"
+#include "Scene.h"
 
 //Music from SDL_mixer
 Mix_Music* music = NULL;
 
 //The window we'll be rendering to
 SDL_Window* window = NULL;
-
-//The surface contained by the window
-SDL_Surface* screen_surface = NULL;
-
-//The surface of the loaded media
-SDL_Surface* optimized_surface = NULL;
 
 //The renderer of the screen
 SDL_Renderer* renderer = NULL;
@@ -83,10 +75,6 @@ bool init() {
 }
 
 void close() {
-	//dealocate surface
-	SDL_FreeSurface(screen_surface);
-	screen_surface = NULL;
-
 	//dealocate window
 	SDL_DestroyWindow(window);
 	window = NULL;
@@ -97,6 +85,7 @@ void close() {
 
 	//quit sdl subsystem and image library
 	IMG_Quit();
+	Mix_Quit();
 	SDL_Quit();
 }
 
@@ -104,7 +93,6 @@ void close() {
 void viewport_rendering() {
 	SDL_Rect topright_viewport = {0,0,SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
 	SDL_RenderSetViewport(renderer, &topright_viewport);
-	//texture_obj.render(renderer, 0, 0, NULL, degrees);
 	button.render(renderer);
 }
 
@@ -119,7 +107,7 @@ void hardware_draw_shapes() {
 	for(int i=SCREEN_HEIGHT/4; i<SCREEN_HEIGHT*3/4; i+=4) {
 		SDL_RenderDrawPoint(renderer,SCREEN_WIDTH/2, i);
 	}
-	viewport_rendering();
+	//viewport_rendering();
 }
 
 void play_music() {
@@ -156,6 +144,7 @@ void play_music() {
 
 int main( int argc, char* args[] )
 {
+	printf("hello");
 	if(!init()) {
 		printf("The initialization failed!");
 	}
@@ -176,8 +165,49 @@ int main( int argc, char* args[] )
 				//event handlers
 				SDL_Event e;
 
+				Scene scene;
+
 				//timer to cap the fps of the application
 				Timer fps_timer;
+
+				//the moving sprite
+				RectangleSprite player;
+
+				//the wall
+				RectangleSprite wall;
+
+				//texture player
+				Texture texture_player;
+
+				//texture wall
+				Texture texture_wall;
+
+				path = "/home/gras/CLionProjects/SDLBonanza/resources/player.png";
+				if(!texture_player.loadFromFile(renderer, path)) {
+					close();
+					return 0;
+				}
+				path = "/home/gras/CLionProjects/SDLBonanza/resources/wall.png";
+				if(!texture_wall.loadFromFile(renderer, path)) {
+					close();
+					return 0;
+				}
+
+				player.set_texture(&texture_player);
+				player.set_position(SCREEN_WIDTH/2 + 32, SCREEN_HEIGHT/2);
+
+				wall.set_texture(&texture_wall);
+				wall.set_position(SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+
+				scene.add_sprite(&player);
+				scene.add_sprite(&wall);
+
+				player.toggle_collision(true);
+				wall.toggle_collision(true);
+
+				player.set_collision_box();
+				wall.set_collision_box();
+
 
 				bool quit = false;
 				while( quit == false ) {
@@ -192,6 +222,10 @@ int main( int argc, char* args[] )
 					SDL_RenderClear(renderer);
 					//this draws shapes like dots, lines and rectangles
 					hardware_draw_shapes();
+
+					player.render(renderer);
+					wall.render(renderer);
+
 					SDL_RenderPresent(renderer);
 
 
@@ -203,15 +237,17 @@ int main( int argc, char* args[] )
 
 						if( e.type == SDL_KEYDOWN) {
 							switch(e.key.keysym.sym) {
+								case(SDLK_DOWN):
+									player.move(0, 10, &scene);
+									break;
 								case(SDLK_UP):
-									texture_obj.set_color(0, 128, 0);
-									texture_obj.set_alpha(128);
+									player.move(0,-10, &scene);
 									break;
 								case(SDLK_LEFT):
-									degrees += 10;
+									player.move(-10, 0, &scene);
 									break;
 								case (SDLK_RIGHT):
-									degrees -= 10;
+									player.move(10, 0, &scene);
 									break;
 								default:
 									break;

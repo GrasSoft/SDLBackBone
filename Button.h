@@ -6,7 +6,7 @@
 //current displayed texture by providing a parent texture and an array of SDL_Rect that represent where to clip the
 //texture. There are 4 posible mouse positions, mouse out, mouse over, mouse down and mouse up. The clips must be
 //provided in order but can skip the last ones depending on the needs of the button(e.g. can skip the mouse up).
-
+#pragma once
 #ifndef BUTTON_H
 #define BUTTON_H
 #include <SDL_events.h>
