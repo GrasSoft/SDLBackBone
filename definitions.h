@@ -6,9 +6,14 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+//Level dimensions
+const int LEVEL_WIDTH = 1280;
+const int LEVEL_HEIGHT = 960;
+
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+
 //time between fps in ms, roughly 60 fps
 const int TIME_BETWEEN_FRAMES = 16;
 

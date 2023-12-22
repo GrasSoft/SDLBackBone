@@ -15,9 +15,19 @@ Sprite::Sprite() {
     colision_type = NO_COLISION;
 }
 
-void Sprite::render(SDL_Renderer* renderer) {
-    texture->render(renderer, position.x, position.y, NULL, angle);
+//shift by cam coordinates so it creates the effect of camera movement
+void Sprite::render(SDL_Renderer* renderer, int cam_x, int cam_y) {
+    texture->render(renderer, position.x - cam_x, position.y - cam_y, NULL, angle);
 }
+
+int Sprite::get_x() {
+    return position.x;
+}
+
+int Sprite::get_y() {
+    return position.y;
+}
+
 
 void Sprite::set_angle(int angle) {
     this->angle = angle;
@@ -137,14 +147,14 @@ CircleSprite::CircleSprite() {
 void CircleSprite::move(int x, int y, Scene* scene) {
     position.x += x;
     collision_box.center.x += x;
-    if((position.x >= (SCREEN_WIDTH - clip.w) || position.x <= 0) || (can_collide && collide_scene(scene))) {
+    if((position.x >= (LEVEL_WIDTH - clip.w) || position.x <= 0) || (can_collide && collide_scene(scene))) {
         position.x -= x;
         collision_box.center.x -= x;
     }
 
     position.y += y;
     collision_box.center.y += y;
-    if((position.y >= (SCREEN_HEIGHT - clip.h) || position.y <= 0) || (can_collide && collide_scene(scene))) {
+    if((position.y >= (LEVEL_HEIGHT - clip.h) || position.y <= 0) || (can_collide && collide_scene(scene))) {
         position.y -= y;
         collision_box.center.y -= y;
     }
@@ -173,14 +183,14 @@ RectangleSprite::RectangleSprite() {
 void RectangleSprite::move(int x, int y, Scene* scene) {
     position.x += x;
     collision_box.x += x;
-    if((position.x >= (SCREEN_WIDTH - clip.w) || position.x <= 0) || (can_collide && collide_scene(scene))) {
+    if((position.x >= (LEVEL_WIDTH - clip.w) || position.x <= 0) || (can_collide && collide_scene(scene))) {
         position.x -= x;
         collision_box.x -= x;
     }
 
     position.y += y;
     collision_box.y += y;
-    if((position.y >= (SCREEN_HEIGHT - clip.h) || position.y <= 0) || (can_collide && collide_scene(scene))) {
+    if((position.y >= (LEVEL_HEIGHT - clip.h) || position.y <= 0) || (can_collide && collide_scene(scene))) {
         position.y -= y;
         collision_box.y -= y;
     }

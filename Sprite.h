@@ -29,8 +29,13 @@ public:
     //constructor
     Sprite();
 
-    //render to the screen
-    void render(SDL_Renderer* renderer);
+    //getter for X and Y coordinates
+    int get_x();
+
+    int get_y();
+
+    //render to the screen, needs camera postion to shift postion
+    void render(SDL_Renderer* renderer, int camera_x, int camera_y);
 
     //set the collisions on or off
     void toggle_collision(bool can_collide);

@@ -23,6 +23,9 @@ SDL_Window* window = NULL;
 //The renderer of the screen
 SDL_Renderer* renderer = NULL;
 
+//camera to show the screen
+SDL_Rect camera = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT};
+
 Texture texture_obj;
 
 Button button;
@@ -182,6 +185,9 @@ int main( int argc, char* args[] )
 				//texture wall
 				Texture texture_wall;
 
+				//bg texture
+				Texture bg;
+
 				path = "/home/gras/CLionProjects/SDLBonanza/resources/player.png";
 				if(!texture_player.loadFromFile(renderer, path)) {
 					close();
@@ -193,8 +199,15 @@ int main( int argc, char* args[] )
 					return 0;
 				}
 
+				path = "/home/gras/CLionProjects/SDLBonanza/resources/bg.png";
+				if(!bg.loadFromFile(renderer, path)) {
+					close();
+					return 0;
+				}
+
+
 				player.set_texture(&texture_player);
-				player.set_position(SCREEN_WIDTH/2 + 32, SCREEN_HEIGHT/2);
+				player.set_position(LEVEL_WIDTH - 32, LEVEL_HEIGHT - 32);
 
 				wall.set_texture(&texture_wall);
 				wall.set_position(SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
@@ -215,18 +228,14 @@ int main( int argc, char* args[] )
 
 					//set the viewport to the whole screen
 					SDL_Rect wholescreen_viewport = {0,0,SCREEN_WIDTH, SCREEN_HEIGHT};
-					SDL_RenderSetViewport(renderer, &wholescreen_viewport);
+					//SDL_RenderSetViewport(renderer, &wholescreen_viewport);
 					//set default render colour to while
 					SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 					//clear the screen so we can draw another frame
 					SDL_RenderClear(renderer);
 					//this draws shapes like dots, lines and rectangles
-					hardware_draw_shapes();
+					//hardware_draw_shapes();
 
-					player.render(renderer);
-					wall.render(renderer);
-
-					SDL_RenderPresent(renderer);
 
 
 					while( SDL_PollEvent( &e ) ) {
@@ -255,6 +264,29 @@ int main( int argc, char* args[] )
 						}
 
 					}
+
+					//change the coordinates of the camera
+					camera.x = player.get_x() - SCREEN_WIDTH/2;
+					camera.y = player.get_y() - SCREEN_HEIGHT/2;
+
+					if(camera.x < 0) {
+						camera.x = 0;
+					}
+					if(camera.x > LEVEL_WIDTH - camera.w) {
+						camera.x = LEVEL_WIDTH - camera.w;
+					}
+					if(camera.y < 0) {
+						camera.y = 0;
+					}
+					if(camera.y > LEVEL_HEIGHT - camera.h) {
+						camera.y = LEVEL_HEIGHT - camera.h;
+					}
+
+					bg.render(renderer, 0, 0, &camera);
+					player.render(renderer, camera.x, camera.y);
+					wall.render(renderer, camera.x, camera.y);
+
+					SDL_RenderPresent(renderer);
 
 					if(fps_timer.get_ticks() < TIME_BETWEEN_FRAMES ) {
 						//time to wait between frames
